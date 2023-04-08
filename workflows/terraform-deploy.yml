@@ -1,0 +1,42 @@
+name: Terraform Deploy
+
+on:
+  workflow_call:
+    inputs:
+      AWS_REGION:
+        required: true
+        type: string
+      AWS_ROLE:
+        required: true
+        type: string
+    secrets:
+      AWS_ACCOUNT:
+        required: true
+
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+
+jobs:
+  terraform-apply:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/${{ inputs.AWS_ROLE }}
+          role-session-name: ${{ inputs.AWS_ROLE }}
+          aws-region: ${{ inputs.AWS_REGION }}
+      - name: Install Terraform
+        run: |
+          cd terraform/aws
+          VERSION=1.3.3
+          wget -q https://releases.hashicorp.com/terraform/$VERSION/terraform_${VERSION}_linux_amd64.zip
+          unzip -q terraform_${VERSION}_linux_amd64.zip
+          chmod 755 terraform
+          ./terraform init
+      - name: Terraform Run
+        run: |
+          cd terraform/aws
+          ./terraform apply -auto-approve

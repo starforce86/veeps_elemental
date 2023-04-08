@@ -1,0 +1,16 @@
+name: Staging Terraform Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "terraform/aws/**" ]
+
+  workflow_dispatch:
+jobs:
+  terraform-apply:
+    uses: "Veeps-Official/veeps_elemental/.github/workflows/terraform-deploy.yml@main"
+    with:
+      AWS_REGION: "us-east-1"
+      AWS_ROLE: "github-actions-devops"
+    secrets:
+      AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}

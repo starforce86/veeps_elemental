@@ -1,0 +1,38 @@
+strictness: medium
+test-warnings: true
+member-warnings: false
+
+ignore-paths:
+  - docs
+  - migrations
+autodetect: true
+max-line-length: 120
+
+dodgy:
+  run: true
+
+frosted:
+  disable:
+    - E103
+    - E306
+
+mccabe:
+  run: true
+  options:
+    max-complexity: 10
+
+pyroma:
+  run: true
+  disable:
+    - PYR15
+    - PYR18
+
+pylint:
+  disable:
+    - logging-fstring-interpolation
+    - logging-format-interpolation
+    - pointless-string-statement
+    - too-many-arguments
+    - too-many-locals
+    - arguments-differ
+    - raise-missing-from

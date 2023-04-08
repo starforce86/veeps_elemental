@@ -1,0 +1,42 @@
+# Ignore IDE files
+.idea/
+**.vscode
+
+# Ignore virtual environment
+**venv
+
+# Ignore tfstate
+*.tfstate
+**tfstate.*
+
+# Ignore terraform installs
+**.terraform
+
+# Ignore pem file(s)
+**.pem
+
+# Don't ask why this happened often enough to warrant inclusion...
+crash.log
+
+# Ignore vim swap files
+**.swp
+
+# Ignore the Lambda .zip file
+**.zip
+
+# Don't upload installed libraries
+**/node_modules
+
+# Ignore OS X metadata files
+.history
+.DS_Store
+
+# Ignore environment files
+.env
+
+# Ignore static files
+/apps/veepsapi/staticfiles/
+
+# Ignore pyc/cache
+*.pyc
+__pycache__/

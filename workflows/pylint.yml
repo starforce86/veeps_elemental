@@ -1,0 +1,36 @@
+name: pylint
+on: [pull_request]
+
+permissions:
+  contents: read 
+
+jobs:
+  pylint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        working-directory: ./apps/veepsapi
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+          pip install --upgrade pip pipenv
+          pipenv install --deploy --system -d  # development
+
+      - name: Run Pylint Veeps_api
+        working-directory: ./apps/veepsapi
+        run: pylint --fail-under=8.5 --recursive=y .
+
+      - name: Run Pylint vod mediapackage lambda
+        working-directory: ./apps/vod_convert_to_package
+        run: pylint --fail-under=8.5 --recursive=y .
+
+      - name: Run Pylint vod s3 trigger lambda
+        working-directory: ./apps/vod_s3_trigger
+        run: pylint --fail-under=8.5 --recursive=y .

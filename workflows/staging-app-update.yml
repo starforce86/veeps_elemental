@@ -1,0 +1,17 @@
+name: Staging App Update
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "apps/**" ]
+
+  workflow_dispatch:
+jobs:
+  app-update:
+    uses: "Veeps-Official/veeps_elemental/.github/workflows/app-update.yml@main"
+    with:
+      AWS_REGION: "us-east-1"
+      AWS_ROLE: "github-actions-devops"
+      APP_ENV: "staging"
+    secrets:
+      AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}

@@ -1,0 +1,102 @@
+name: App Update
+
+on:
+  workflow_call:
+    inputs:
+      AWS_REGION:
+        required: true
+        type: string
+      AWS_ROLE:
+        required: true
+        type: string
+      APP_ENV:
+        required: true
+        type: string
+    secrets:
+      AWS_ACCOUNT:
+        required: true
+
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+
+jobs:
+  app-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/${{ inputs.AWS_ROLE }}
+          role-session-name: ${{ inputs.AWS_ROLE }}
+          aws-region: ${{ inputs.AWS_REGION }}
+
+      - name: Install Dependencies
+        run: |
+          pip3 install awscli
+
+      - name: vod_s3_trigger Requirement Changed
+        id: vod_s3_trigger-layer-changed
+        uses: tj-actions/changed-files@v34
+        with:
+          files: |
+            apps/vod_s3_trigger/requirements.txt
+      - name: Update vod_s3_trigger-layer
+        if: steps.vod_s3_trigger-layer-changed.outputs.any_changed == 'true'
+        run: |
+          cd apps/vod_s3_trigger
+          pip3 install --platform manylinux2014_x86_64 --requirement requirements.txt --no-deps --target python
+          zip -r /tmp/vod_s3_trigger-layer.zip python
+          rm -rf python
+          aws s3 cp --quiet /tmp/vod_s3_trigger-layer.zip s3://veeps-lambda-${{ inputs.APP_ENV }}/
+          LayerVersionArn=$(aws lambda publish-layer-version --layer-name vod_s3_trigger-layer --content S3Bucket=veeps-lambda-${{ inputs.APP_ENV }},S3Key=vod_s3_trigger-layer.zip --query LayerVersionArn --output text)
+          aws lambda update-function-configuration --function-name vod_s3_trigger --layers $LayerVersionArn
+          rm /tmp/vod_s3_trigger-layer.zip
+
+      - name: vod_s3_trigger Changed
+        id: vod_s3_trigger-changed
+        uses: tj-actions/changed-files@v34
+        with:
+          files: |
+            apps/vod_s3_trigger/*.py
+            apps/vod_s3_trigger/*.json
+      - name: Update vod_s3_trigger
+        if: steps.vod_s3_trigger-changed.outputs.any_changed == 'true'
+        run: |
+          cd apps/vod_s3_trigger
+          zip -r /tmp/vod_s3_trigger.zip .
+          aws s3 cp /tmp/vod_s3_trigger.zip s3://veeps-lambda-${{ inputs.APP_ENV }}/
+          aws lambda update-function-code --function-name vod_s3_trigger --s3-bucket veeps-lambda-${{ inputs.APP_ENV }} --s3-key vod_s3_trigger.zip
+          rm /tmp/vod_s3_trigger.zip
+
+      - name: vod_convert_to_package Changed
+        id: vod_convert_to_package-changed
+        uses: tj-actions/changed-files@v34
+        with:
+          files: |
+            apps/vod_convert_to_package/**
+      - name: Update vod_convert_to_package
+        if: steps.vod_convert_to_package-changed.outputs.any_changed == 'true'
+        run: |
+          cd apps/vod_convert_to_package
+          zip -r /tmp/vod_convert_to_package.zip .
+          aws s3 cp /tmp/vod_convert_to_package.zip s3://veeps-lambda-${{ inputs.APP_ENV }}/
+          aws lambda update-function-code --function-name vod_convert_to_package --s3-bucket veeps-lambda-${{ inputs.APP_ENV }} --s3-key vod_convert_to_package.zip
+          rm /tmp/vod_convert_to_package.zip
+
+      - name: Veeps Api Changed
+        id: veeps-api-changed
+        uses: tj-actions/changed-files@v34
+        with:
+          files: |
+            apps/veepsapi/**
+      - name: Update Veeps Api
+        if: steps.veeps-api-changed.outputs.any_changed == 'true'
+        run: |
+          cd apps/veepsapi
+          REPO=${{ secrets.AWS_ACCOUNT }}.dkr.ecr.${{ inputs.AWS_REGION }}.amazonaws.com
+          docker build -f ./dockerfile.prod -t $REPO/veeps_api:latest .
+          aws ecr get-login-password --region ${{ inputs.AWS_REGION }} | docker login --username AWS --password-stdin $REPO
+          docker push $REPO/veeps_api:latest
+          aws ecs update-service --cluster veeps --service veeps --force-new-deployment

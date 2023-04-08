@@ -1,0 +1,33 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "==4.1"
+psycopg2 = "==2.9.3"
+django-environ = "==0.9.0"
+gunicorn = "==20.1.0"
+djangorestframework = "==3.13.1"
+django-extensions = "==3.2.0"
+django-authlib = "==0.13.1"
+pillow = "==9.2.0"
+drf-spectacular = "==0.23.1"
+troposphere = "*"
+watchtower = "*"
+boto3 = "*"
+drf-nested-routers = "*"
+django-netfields = "*"
+drf-api-logger = "1.1.11"
+django-storages = "*"
+factory-boy = "*"
+django-filter = "*"
+django-createsuperuserwithpassword = "*"
+
+[dev-packages]
+pylint = "*"
+prospector = {extras = ["with_everything"], version = "*"}
+black = "*"
+
+[requires]
+python_version = "3.10"
