@@ -34,8 +34,8 @@ aws iam list-mfa-devices --profile veeps
 {
     "MFADevices": [
         {
-            "UserName": "steve.butler",
-            "SerialNumber": "arn:aws:iam::695729695688:mfa/steve.butler",
+            "UserName": "maxim.marty",
+            "SerialNumber": "arn:aws:iam::695729695688:mfa/maxim.marty",
             "EnableDate": "DATEMFADEVICEENABLED"
         }
     ]
